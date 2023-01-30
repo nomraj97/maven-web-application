@@ -1,0 +1,47 @@
+node{
+  def mavenHome = tool name:"maven-3.8.7"
+  
+  //echo "GitHub BranhName ${env.BRANCH_NAME}"
+  //echo "Jenkins Job Number is: -->  ${env.BUILD_NUMBER}"
+  echo "Jenkins Node Name is: --> ${env.NODE_NAME}"
+  
+  echo "Jenkins Home is: --> ${env.JENKINS_HOME}"
+  echo "Jenkins URL is: -->  ${env.JENKINS_URL}"
+  echo "JOB Name is: -->  ${env.JOB_NAME}"
+  
+  stage ('checkOutCode')
+  {
+  git branch: 'development', credentialsId: '762263bc-cb50-45ff-bb7d-e332cf55d71f', url: 'https://github.com/nomraj97/maven-web-application.git'
+  }
+  
+  stage ('Build')
+  {
+  sh"${mavenHome}/bin/mvn clean package"
+  }
+  
+  
+  stage ('SonarQubeReport') {
+  sh"${mavenHome}/bin/mvn clean sonar:sonar"
+  }
+  
+  stage ('uploadeArtifactIntoNexus') {
+  sh"${mavenHome}/bin/mvn clean deploy"
+  }
+  
+   stage ('DeployAppIntoTomcatServer')
+  {
+  sshagent(['edcb30f4-e809-4e50-823b-e6447644821f']) {
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@54.169.128.208:/opt/tomcat/webapps/"
+  }
+  }
+  
+  stage ('SendEmailNotification') {
+  emailext body: '''Build over..
+
+  Regards
+  nomraj p
+  m tech
+  9398236773''', subject: 'Build Over...!', to: 'nomraj97@gmail.com'
+  }
+  
+}
