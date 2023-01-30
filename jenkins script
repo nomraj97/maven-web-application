@@ -23,7 +23,7 @@ node{
   stage ('SonarQubeReport') {
   sh"${mavenHome}/bin/mvn clean sonar:sonar"
   }
-  
+  /*
   stage ('uploadeArtifactIntoNexus') {
   sh"${mavenHome}/bin/mvn clean deploy"
   }
@@ -34,6 +34,8 @@ node{
     sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@54.169.128.208:/opt/tomcat/webapps/"
   }
   }
+  
+  */
   
   stage ('SendEmailNotification') {
   emailext body: '''Build over..
