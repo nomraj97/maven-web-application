@@ -1,0 +1,87 @@
+pipeline{
+
+agent any
+
+/*
+agent{
+label "nodename"
+}
+*/
+
+tools{
+maven "maven-3.8.7"
+}
+
+stages{
+
+stage('checkOutCode')
+{
+ steps{
+ git branch: 'development', credentialsId: '762263bc-cb50-45ff-bb7d-e332cf55d71f', url: 'https://github.com/nomraj97/maven-web-application.git'
+ }
+ }
+ 
+ stage('Build'){
+   steps{
+   sh "mvn clean package"
+   }
+   }
+   
+   stage('ExecuteSonarQubeReport'){
+   steps{
+   sh"mvn clean sonar:sonar"
+   }
+ }
+ 
+ stage('uploadArtifactsintoNexus'){
+   steps{
+   sh"mvn clean deploy"
+   }
+ }
+ 
+ stage('DeployAppIntoTomcatServer'){
+   steps{
+   sshagent(['edcb30f4-e809-4e50-823b-e6447644821f']) {
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.1.203.93:/opt/tomcat/webapps/"
+  }
+  }
+ }  
+ 
+
+}//stages closing
+   
+   post{
+   always{
+   emailext body: '''Build over..
+
+  Regards
+  nomraj p
+  m tech
+  9398236773''', subject: 'Build Over...!', to: 'nomraj97@gmail.com'
+  
+   }
+   
+   failure{
+   emailext body: '''Build over - failure!!
+
+  Regards
+  nomraj p
+  m tech
+  9398236773''', subject: 'Build Over...!', to: 'nomraj97@gmail.com'
+  
+   }
+   
+   success{
+   emailext body: '''Build over - success!!
+
+  Regards
+  nomraj p
+  m tech
+  9398236773''', subject: 'Build Over...!', to: 'nomraj97@gmail.com'
+  
+   }
+   
+   }
+   
+   
+   }//pipeline closing
